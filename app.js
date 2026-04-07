@@ -76,6 +76,9 @@ const FORMULAS=[
 ];
 const RESOURCES=[
   {c:'📖 精华笔记',items:[{n:'HBarma CFA L1笔记PDF',u:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf'}]},
+  {c:'🎓 极速串讲讲义（百度网盘 提取码:733j）',items:[
+    {n:'📂 全部讲义（串讲+精讲）',u:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j'},
+  ]},
   {c:'📋 速查表(收藏到手机)',items:[
     {n:'道德 Ethics',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_01_Ethical_and_Professional_Standards.md'},
     {n:'数量 QM',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_02_Quantitative_Methods.md'},
