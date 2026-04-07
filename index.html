@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFA L1 · 备考追踪器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+<div class="app">
+<div class="sidebar">
+  <div class="sidebar-header"><h1>📊 CFA Level I</h1><div class="sub">39天速通 · 4/7→5/15 · 考试5/16</div></div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" data-page="dashboard"><span class="icon">📈</span>仪表盘</div>
+    <div class="nav-item" data-page="plan"><span class="icon">📅</span>每日计划</div>
+    <div class="nav-item" data-page="notes"><span class="icon">📝</span>笔记心得</div>
+    <div class="nav-item" data-page="formulas"><span class="icon">📐</span>公式速记</div>
+    <div class="nav-item" data-page="resources"><span class="icon">📚</span>学习资源</div>
+    <div class="nav-item" data-page="sync"><span class="icon">☁️</span>数据同步</div>
+  </div>
+  <div class="sidebar-footer"><div class="countdown"><span class="days" id="cd">--</span><span class="label">天后考试</span></div></div>
+</div>
+<div class="main">
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">📈 备考仪表盘</div>
+    <div class="stats-grid" id="sg"></div>
+    <div class="two-col"><div class="card"><div class="card-title">📊 总体进度</div><div id="op"></div></div><div class="card"><div class="card-title">📅 近7天学习(h)</div><div class="mini-chart" id="wc"></div></div></div>
+    <div class="card"><div class="card-title">📚 各科目进度</div><table class="subject-table"><thead><tr><th>科目</th><th>权重</th><th>计划</th><th>已学</th><th>进度</th><th>状态</th></tr></thead><tbody id="stb"></tbody></table></div>
+    <div class="card"><div class="card-title">🔥 今日任务</div><div id="tt"></div></div>
+  </div>
+  <div class="page" id="page-plan"><div class="page-title">📅 39天逐日计划</div><div id="pc"></div></div>
+  <div class="page" id="page-notes"><div class="page-title">📝 学习笔记 & 心得</div><div class="notes-header"><div class="notes-filter" id="nf"></div><button class="btn btn-primary" onclick="openNM()">+ 新建笔记</button></div><div id="nl"></div></div>
+  <div class="page" id="page-formulas"><div class="page-title">📐 核心公式速记 <span style="font-size:.72rem;color:var(--text2);font-weight:400;margin-left:6px;">点击标记已掌握</span></div><div id="fc"></div></div>
+  <div class="page" id="page-resources"><div class="page-title">📚 学习资源汇总</div><div id="rc"></div></div>
+  <div class="page" id="page-sync">
+    <div class="page-title">☁️ 数据同步</div>
+    <div class="card">
+      <div class="card-title">📱 手动导入/导出（最简单）</div>
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px;">一键导出数据为JSON文件，在另一台设备导入即可同步。适合偶尔换设备使用。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportData()">📤 导出数据</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📥 导入数据</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+      <div id="sync-manual-status" style="font-size:.78rem;margin-top:8px;color:var(--green);"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">☁️ GitHub Gist 云同步（推荐）</div>
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px;">通过GitHub Gist免费云存储实现多设备自动同步。只需配置一次Token，之后点击同步即可。</p>
+      <div class="form-group"><label>GitHub Personal Access Token <a href="https://github.com/settings/tokens/new?scopes=gist&description=CFA-Study-Sync" target="_blank" style="font-size:.72rem;">(点此创建→勾选gist权限)</a></label><input type="password" id="gist-token" placeholder="ghp_xxxxxxxxxxxx" style="font-family:monospace;"></div>
+      <div class="form-group"><label>Gist ID (首次同步后自动生成，也可粘贴已有ID)</label><input id="gist-id" placeholder="留空=自动创建新Gist" style="font-family:monospace;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn btn-primary" onclick="gistPush()">⬆️ 上传到云端</button>
+        <button class="btn btn-secondary" onclick="gistPull()">⬇️ 从云端拉取</button>
+        <button class="btn btn-secondary" onclick="saveGistConfig()">💾 保存配置</button>
+      </div>
+      <div id="sync-gist-status" style="font-size:.78rem;margin-top:8px;"></div>
+      <div style="margin-top:14px;padding:10px;background:var(--bg3);border-radius:8px;font-size:.75rem;color:var(--text2);line-height:1.6;">
+        <b>使用方法：</b><br>
+        1️⃣ 点击上方链接创建GitHub Token（勾选gist权限）<br>
+        2️⃣ 粘贴Token，点击"保存配置"<br>
+        3️⃣ 在电脑上点"上传到云端"<br>
+        4️⃣ 在手机浏览器打开同一网址，粘贴同一Token和Gist ID，点"从云端拉取"<br>
+        💡 Token存在本地浏览器，不会被传到其他地方
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 同步状态</div>
+      <div id="sync-info" style="font-size:.82rem;color:var(--text2);line-height:1.8;"></div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Modals -->
+<div class="modal-overlay" id="ci-modal"><div class="modal"><button class="modal-close" onclick="closeM('ci-modal')">×</button><h2>✅ 学习打卡</h2><div class="form-group"><label>Day</label><input id="ci-day" readonly></div><div class="form-row"><div class="form-group"><label>学习时长(小时)</label><input type="number" id="ci-h" step="0.25" min="0" max="16" placeholder="3.5"></div><div class="form-group"><label>完成度</label><select id="ci-c"><option value="100">✅ 全部完成</option><option value="75">🟡 大部分</option><option value="50">🟠 一半</option><option value="25">🔴 少量</option><option value="0">⬜ 未学</option></select></div></div><div class="form-group"><label>今日心得(可选)</label><textarea id="ci-n" placeholder="记录感悟、难点、突破…"></textarea></div><div class="btn-group"><button class="btn btn-primary" onclick="saveCI()">保存打卡</button><button class="btn btn-secondary" onclick="closeM('ci-modal')">取消</button></div></div></div>
+<div class="modal-overlay" id="n-modal"><div class="modal"><button class="modal-close" onclick="closeM('n-modal')">×</button><h2 id="nmt">📝 新建笔记</h2><input type="hidden" id="nei"><div class="form-group"><label>标题</label><input id="n-title" placeholder="笔记标题"></div><div class="form-row"><div class="form-group"><label>科目</label><select id="n-sub"><option value="general">通用</option><option value="qm">数量方法</option><option value="fsa">财报分析</option><option value="fi">固定收益</option><option value="equity">权益投资</option><option value="corp">公司金融</option><option value="econ">经济学</option><option value="alts">另类投资</option><option value="pm">组合管理</option><option value="deriv">衍生品</option><option value="ethics">道德</option><option value="mock">模考</option><option value="review">复习</option></select></div><div class="form-group"><label>类型</label><select id="n-type"><option value="note">📖 笔记</option><option value="insight">💡 心得</option><option value="mistake">❌ 错题</option><option value="formula">📐 公式</option></select></div></div><div class="form-group"><label>内容</label><textarea id="n-content" placeholder="写下笔记内容…" style="min-height:140px;"></textarea></div><div class="btn-group"><button class="btn btn-primary" onclick="saveN()">保存</button><button class="btn btn-secondary" onclick="closeM('n-modal')">取消</button></div></div></div>
+<div class="modal-overlay" id="vn-modal"><div class="modal"><button class="modal-close" onclick="closeM('vn-modal')">×</button><h2 id="vnt"></h2><div id="vnm" style="margin-bottom:10px;"></div><div id="vnb" style="font-size:.86rem;line-height:1.7;white-space:pre-wrap;"></div></div></div>
+<script src="app.js"></script>
+</body>
+</html>
