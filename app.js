@@ -287,9 +287,9 @@ function renderPlan(){
     w.days.forEach(dn=>{
       const p=PLAN.find(x=>x.day===dn);if(!p)return;
       const ci=cks[dn],isT=dn===tn,isPast=dn<tn,done=ci&&ci.completion>0;
-      let cls='day-card';if(isT)cls+=' today';if(isPast&&done)cls+=' done';
+      let cls='day-card';if(isT)cls+=' today';if(done)cls+=' done';
       h+=`<div class="${cls}"><div class="day-check" onclick="event.stopPropagation();openCI(${dn})"></div><div class="day-info"><div class="day-date">Day ${p.day} · ${p.date}</div><div class="day-title">${p.title} <span class="note-tag tag-${p.subject}" style="font-size:.63rem;vertical-align:middle">${SL[p.subject]||p.subject}</span></div><div class="day-tasks">${p.tasks}</div>${p.tip?`<div style="font-size:.7rem;color:var(--orange);margin-top:2px">💡 ${p.tip}</div>`:''}${ci?`<div class="day-logged">✅ ${ci.hours}h · 完成${ci.completion}%${ci.note?' · 📝':''}</div>`:''}
-      <div class="day-actions">${ci?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openCI(${dn})">修改</button>`:`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openCI(${dn})">打卡</button>`} <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openNM(null,'${p.subject}','','Day${dn} ')">📝</button></div></div></div>`;
+      <div class="day-actions">${done?`<button class="btn btn-sm btn-success" onclick="event.stopPropagation();openCI(${dn})">✅ 已打卡</button>`:`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openCI(${dn})">打卡</button>`} <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openNM(null,'${p.subject}','','Day${dn} ')">📝</button></div></div></div>`;
     });
     h+=`</div></div>`;
   });
