@@ -75,11 +75,14 @@ const FORMULAS=[
   {s:'固定收益',items:[{n:'久期近似',f:'ΔP/P≈-Duration×Δy'},{n:'凸性调整',f:'ΔP/P≈-D×Δy+½×Conv×(Δy)²'}]},
 ];
 const RESOURCES=[
-  {c:'📖 精华笔记',items:[{n:'HBarma CFA L1笔记PDF',u:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf'}]},
-  {c:'🎓 极速串讲讲义（百度网盘 提取码:733j）',items:[
-    {n:'📂 全部讲义（串讲+精讲）',u:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j'},
+  {c:'📖 精华笔记 & 讲义',items:[
+    {n:'HBarma CFA L1笔记PDF (GitHub开源·2025考纲)',u:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf'},
+    {n:'📂 极速串讲讲义 (百度网盘 提取码:733j)',u:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j'},
+    {n:'IFT World 免费笔记 (官方认证·覆盖全考纲)',u:'https://ift.world/notes/'},
+    {n:'PrepNuggets 免费浓缩笔记 (社区口碑好)',u:'https://prepnuggets.com/cfa-level-1-study-notes/'},
+    {n:'Financial Analyst Guide 全科笔记',u:'https://www.financialanalystguide.com/cfa-level-1/'},
   ]},
-  {c:'📋 速查表(收藏到手机)',items:[
+  {c:'📋 速查表 Cheat Sheets (收藏到手机)',items:[
     {n:'道德 Ethics',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_01_Ethical_and_Professional_Standards.md'},
     {n:'数量 QM',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_02_Quantitative_Methods.md'},
     {n:'经济 Econ',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_03_Economics.md'},
@@ -92,16 +95,115 @@ const RESOURCES=[
     {n:'组合 PM',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_09_Portfolio_Management.md'},
     {n:'FSA关键比率',u:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_FSA_Key_Ratios_for_Credit_Analysts.md'},
   ]},
-  {c:'📝 练习题 & 模考',items:[
-    {n:'CFA官方模考',u:'https://www.cfainstitute.org/programs/cfa-program/candidate-resources/mock-exam-and-practice-questions'},
-    {n:'FreeFellow 1050题(午间首选)',u:'https://www.freefellow.org/free/cfa-level-1/'},
-    {n:'Open Exam Prep 200+题',u:'https://open-exam-prep.com/practice/cfa-level1'},
-    {n:'300Hours 90题模考',u:'https://300hours.com/free-cfa-level-1-mock-exam/'},
-    {n:'CFAExamPrep 180题',u:'https://cfaexamprep.com/free-cfa-mock-exam'},
-    {n:'FinQuiz 6套模考',u:'https://www.finquiz.com/cfa/level-1/mock-exam/'},
+  {c:'✏️ 练习题 & 模考 (均经验证可靠)',items:[
+    {n:'🏛️ CFA官方模考+题库 (最权威，考前必做)',u:'https://www.cfainstitute.org/programs/cfa-program/candidate-resources/mock-exam-and-practice-questions'},
+    {n:'⭐ FreeFellow 1050题 (CFA官方认证Prep Provider·午间首选)',u:'https://www.freefellow.org/free/cfa-level-1/'},
+    {n:'FinQuiz 6套模考 (行业认可·周末模考用)',u:'https://www.finquiz.com/cfa/level-1/mock-exam/'},
+    {n:'300Hours 免费资料汇总 (CFA社区知名博客)',u:'https://300hours.com/the-free-cfa-study-materials-list/'},
+    {n:'Soleadea 免费题库+视频 (质量不错)',u:'https://soleadea.org/free-cfa-study-materials'},
+    {n:'Kaplan Schweser 免费资料 (培训行业标杆)',u:'https://www.schweser.com/cfa/free-study-materials'},
+  ]},
+  {c:'🎬 视频课程 (免费/部分免费)',items:[
+    {n:'⭐ IFT World YouTube (Arif Irfanullah·最受欢迎的免费CFA课)',u:'https://www.youtube.com/c/IFTWorld'},
+    {n:'⭐ Mark Meldrum YouTube (CFA名师·部分免费)',u:'https://www.youtube.com/c/MarkMeldrum'},
+    {n:'FinQuiz CFA L1 全科播放列表',u:'https://www.finquiz.com/cfa-level-1-full-course-playlist/'},
+    {n:'AnalystPrep 免费视频课',u:'https://analystprep.com/cfa-level-1-video-lessons/'},
+    {n:'B站 CFA一级精讲 (Joey Sha·中文)',u:'https://www.bilibili.com/cheese/play/ss19055'},
+    {n:'超星MOOC CFA一级全景课 (免费·198课时·中文)',u:'https://mooc1.chaoxing.com/mooc-ans/course/204303326.html'},
+  ]},
+  {c:'🌐 社区 & 经验分享',items:[
+    {n:'300Hours.com (英文CFA备考博客·经验/资料汇总)',u:'https://300hours.com/'},
+    {n:'CFA论坛 (中文·cfa.cn旗下)',u:'https://bbs.cfa.cn/'},
+    {n:'知乎: CFA一级备考攻略',u:'https://www.zhihu.com/topic/19609729'},
+    {n:'小红书搜索: CFA一级备考',u:'https://www.xiaohongshu.com/search_result?keyword=CFA%E4%B8%80%E7%BA%A7'},
   ]},
 ];
 const SL={all:'全部',qm:'数量',fsa:'财报',fi:'固收',equity:'权益',corp:'公金',econ:'经济',alts:'另类',pm:'组合',deriv:'衍生',ethics:'道德',mock:'模考',review:'复习',general:'通用'};
+
+// Subject -> study resources mapping (for dashboard quick links)
+const SUB_LINKS={
+  qm:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_02_Quantitative_Methods.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  fsa:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_04_Financial_Reporting_and_Analysis.md',
+    ratios:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_FSA_Key_Ratios_for_Credit_Analysts.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  fi:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_07_Fixed_Income.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  equity:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_06_Equity_Investments.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  corp:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_05_Corporate_Finance.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  econ:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_03_Economics.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  alts:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_08_Alternative_Investments.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  pm:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_09_Portfolio_Management.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  deriv:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_07_Derivatives.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  ethics:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    cheat:'https://adamvangrover.github.io/craft/CFA/Level_1/Cheat_Sheets/CS_01_Ethical_and_Professional_Standards.md',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    video:'https://www.youtube.com/playlist?list=PLqzoL9-eJTNCbEEr7OEm5UQOPC7bBPvN',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+  mock:{
+    cfa:'https://www.cfainstitute.org/programs/cfa-program/candidate-resources/mock-exam-and-practice-questions',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    finquiz:'https://www.finquiz.com/cfa/level-1/mock-exam/',
+  },
+  review:{
+    notes:'./CFA_L1_Study/CFA-Level-I/notes_compiled.pdf',
+    quiz:'https://www.freefellow.org/free/cfa-level-1/',
+    baidu:'https://pan.baidu.com/s/1bjYaPrZqtrjQzZ0lxyxQ-w?pwd=733j',
+  },
+};
 
 // Storage
 function ld(k,d){try{return JSON.parse(localStorage.getItem('cfa_'+k))||d}catch{return d}}
@@ -159,7 +261,22 @@ function renderDash(){
     <div style="font-size:.86rem;font-weight:600;margin-bottom:4px">${plan.title}</div>
     <div style="font-size:.8rem;color:var(--text2);white-space:pre-wrap;line-height:1.6">${plan.tasks}</div>
     ${plan.tip?`<div style="font-size:.76rem;color:var(--orange);margin-top:6px">💡 ${plan.tip}</div>`:''}
-    <div style="margin-top:10px">${ci?`<button class="btn btn-sm btn-secondary" onclick="openCI(${plan.day})">修改打卡</button>`:`<button class="btn btn-sm btn-primary" onclick="openCI(${plan.day})">✅ 打卡</button>`} <button class="btn btn-sm btn-secondary" onclick="openNM(null,'${plan.subject}','','Day${plan.day} ')">📝 记笔记</button></div>`;
+    <div style="margin-top:10px">${ci?`<button class="btn btn-sm btn-secondary" onclick="openCI(${plan.day})">修改打卡</button>`:`<button class="btn btn-sm btn-primary" onclick="openCI(${plan.day})">✅ 打卡</button>`} <button class="btn btn-sm btn-secondary" onclick="openNM(null,'${plan.subject}','','Day${plan.day} ')">📝 记笔记</button></div>
+    ${renderQuickLinks(plan.subject)}`;
+}
+
+function renderQuickLinks(sub){
+  const L=SUB_LINKS[sub];if(!L)return '';
+  const btns=[];
+  if(L.notes)btns.push(`<a href="${L.notes}" target="_blank" class="btn btn-sm btn-secondary">📖 笔记</a>`);
+  if(L.cheat)btns.push(`<a href="${L.cheat}" target="_blank" class="btn btn-sm btn-secondary">📋 速查表</a>`);
+  if(L.ratios)btns.push(`<a href="${L.ratios}" target="_blank" class="btn btn-sm btn-secondary">📊 比率表</a>`);
+  if(L.quiz)btns.push(`<a href="${L.quiz}" target="_blank" class="btn btn-sm btn-secondary">✏️ 刷题</a>`);
+  if(L.video)btns.push(`<a href="${L.video}" target="_blank" class="btn btn-sm btn-secondary">🎬 视频课</a>`);
+  if(L.baidu)btns.push(`<a href="${L.baidu}" target="_blank" class="btn btn-sm btn-secondary">📂 串讲讲义</a>`);
+  if(L.cfa)btns.push(`<a href="${L.cfa}" target="_blank" class="btn btn-sm btn-secondary">🏛️ CFA官方模考</a>`);
+  if(L.finquiz)btns.push(`<a href="${L.finquiz}" target="_blank" class="btn btn-sm btn-secondary">📝 FinQuiz模考</a>`);
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);"><div style="font-size:.75rem;color:var(--text2);margin-bottom:6px;">📚 今日学习资料</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${btns.join('')}</div></div>`;
 }
 
 // Plan
