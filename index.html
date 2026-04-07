@@ -56,6 +56,27 @@
         <button class="btn btn-secondary" onclick="saveGistConfig()">💾 保存配置</button>
       </div>
       <div id="sync-gist-status" style="font-size:.78rem;margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 自动同步</div>
+      <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px;">开启后，打卡/写笔记会自动上传；打开页面会自动拉取最新数据。还会定时检查云端更新。</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.88rem;">
+          <input type="checkbox" id="auto-sync-toggle" onchange="toggleAutoSync()" style="width:18px;height:18px;accent-color:var(--accent);">
+          启用自动同步
+        </label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:.82rem;color:var(--text2);">间隔</span>
+          <select id="auto-interval" onchange="saveAutoInterval()" style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:4px 8px;color:var(--text);font-size:.82rem;">
+            <option value="2">2分钟</option>
+            <option value="5" selected>5分钟</option>
+            <option value="10">10分钟</option>
+            <option value="15">15分钟</option>
+            <option value="30">30分钟</option>
+          </select>
+        </div>
+      </div>
+      <div id="auto-sync-status" style="font-size:.78rem;margin-top:8px;color:var(--accent2);transition:opacity .3s;"></div>
       <div style="margin-top:14px;padding:10px;background:var(--bg3);border-radius:8px;font-size:.75rem;color:var(--text2);line-height:1.6;">
         <b>使用方法：</b><br>
         1️⃣ 点击上方链接创建GitHub Token（勾选gist权限）<br>

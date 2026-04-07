@@ -253,11 +253,25 @@ function renderAll(){renderDash();renderPlan();renderNotes();renderFormulas();re
 renderAll();
 
 // ===== SYNC =====
+let _autoSyncTimer=null, _dataHash='', _syncing=false;
+
 // Load gist config
 (function loadGistCfg(){
   const t=localStorage.getItem('cfa_gist_token'),g=localStorage.getItem('cfa_gist_id');
-  if(t)document.getElementById('gist-token').value=t;
-  if(g)document.getElementById('gist-id').value=g;
+  const el1=document.getElementById('gist-token'),el2=document.getElementById('gist-id');
+  if(t&&el1)el1.value=t;
+  if(g&&el2)el2.value=g;
+  // Auto-sync interval
+  const iv=localStorage.getItem('cfa_auto_interval')||'5';
+  const el3=document.getElementById('auto-interval');
+  if(el3)el3.value=iv;
+  const enabled=localStorage.getItem('cfa_auto_sync')==='true';
+  const el4=document.getElementById('auto-sync-toggle');
+  if(el4)el4.checked=enabled;
+  if(enabled)startAutoSync();
+  // Auto pull on page load
+  if(t&&g&&enabled)silentPull();
+  _dataHash=hashData();
 })();
 
 function saveGistConfig(){
@@ -270,12 +284,14 @@ function saveGistConfig(){
 function getAllData(){
   return {checkins:cks,notes,mastered:mf,_ts:new Date().toISOString(),_v:2};
 }
+function hashData(){return JSON.stringify({c:cks,n:notes,m:mf});}
 
-function applyData(d){
+function applyData(d,silent){
   if(d.checkins){cks=d.checkins;sv('checkins',cks);}
   if(d.notes){notes=d.notes;sv('notes',notes);}
   if(d.mastered){mf=d.mastered;sv('mastered',mf);}
-  renderAll();
+  _dataHash=hashData();
+  if(!silent)renderAll();
 }
 
 // Manual export
@@ -299,72 +315,196 @@ function importData(e){
       if(!d.checkins&&!d.notes){throw new Error('invalid');}
       if(!confirm('确认导入？当前数据将被覆盖。\n\n数据时间: '+(d._ts||'未知')))return;
       applyData(d);
-      showStatus('sync-manual-status','✅ 数据导入成功！已加载 '+Object.keys(d.checkins||{}).length+' 天打卡 + '+(d.notes||[]).length+' 条笔记','var(--green)');
+      showStatus('sync-manual-status','✅ 导入成功！'+Object.keys(d.checkins||{}).length+' 天打卡 + '+(d.notes||[]).length+' 条笔记','var(--green)');
     }catch(err){showStatus('sync-manual-status','❌ 文件格式错误','var(--red)');}
   };
   r.readAsText(f);e.target.value='';
 }
 
-// Gist push
+// Gist push (manual)
 async function gistPush(){
-  const token=document.getElementById('gist-token').value.trim();
+  const token=(document.getElementById('gist-token').value||localStorage.getItem('cfa_gist_token')||'').trim();
   if(!token){showStatus('sync-gist-status','❌ 请先填写Token','var(--red)');return;}
   showStatus('sync-gist-status','⏳ 上传中...','var(--yellow)');
-  const data=getAllData();
-  const gistId=document.getElementById('gist-id').value.trim();
+  const ok=await _doPush(token);
+  if(ok)showStatus('sync-gist-status','✅ 上传成功！','var(--green)');
+}
+
+// Core push
+async function _doPush(token){
+  if(_syncing)return false;_syncing=true;
   try{
-    let res;
+    const data=getAllData();
+    const gistId=(document.getElementById('gist-id').value||localStorage.getItem('cfa_gist_id')||'').trim();
     const body={description:'CFA L1 Study Progress (auto-sync)',public:false,files:{'cfa-study-data.json':{content:JSON.stringify(data,null,2)}}};
+    let res;
     if(gistId){
       res=await fetch('https://api.github.com/gists/'+gistId,{method:'PATCH',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
     }else{
       res=await fetch('https://api.github.com/gists',{method:'POST',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
     }
-    if(!res.ok)throw new Error(res.status+' '+res.statusText);
+    if(!res.ok)throw new Error(res.status);
     const j=await res.json();
-    document.getElementById('gist-id').value=j.id;
+    const el=document.getElementById('gist-id');if(el)el.value=j.id;
     localStorage.setItem('cfa_gist_id',j.id);
     localStorage.setItem('cfa_gist_token',token);
     localStorage.setItem('cfa_last_push',new Date().toISOString());
-    showStatus('sync-gist-status','✅ 上传成功！Gist ID: '+j.id,'var(--green)');
-    renderSyncInfo();
-  }catch(err){showStatus('sync-gist-status','❌ 上传失败: '+err.message,'var(--red)');}
+    _dataHash=hashData();
+    renderSyncInfo();_syncing=false;return true;
+  }catch(err){
+    showStatus('sync-gist-status','❌ 上传失败: '+err.message,'var(--red)');
+    _syncing=false;return false;
+  }
 }
 
-// Gist pull
+// Gist pull (manual with confirm)
 async function gistPull(){
-  const token=document.getElementById('gist-token').value.trim();
-  const gistId=document.getElementById('gist-id').value.trim();
+  const token=(document.getElementById('gist-token').value||localStorage.getItem('cfa_gist_token')||'').trim();
+  const gistId=(document.getElementById('gist-id').value||localStorage.getItem('cfa_gist_id')||'').trim();
   if(!token||!gistId){showStatus('sync-gist-status','❌ 请填写Token和Gist ID','var(--red)');return;}
   showStatus('sync-gist-status','⏳ 拉取中...','var(--yellow)');
   try{
-    const res=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'token '+token}});
-    if(!res.ok)throw new Error(res.status+' '+res.statusText);
-    const j=await res.json();
-    const file=j.files['cfa-study-data.json'];
-    if(!file)throw new Error('Gist中找不到数据文件');
-    const data=JSON.parse(file.content);
+    const data=await _doPull(token,gistId);
+    if(!data)return;
     const remoteTs=data._ts?new Date(data._ts).toLocaleString('zh-CN'):'未知';
-    if(!confirm('确认从云端拉取数据？当前本地数据将被覆盖。\n\n云端数据时间: '+remoteTs))return;
+    if(!confirm('确认从云端拉取？本地数据将被覆盖。\n\n云端时间: '+remoteTs))return;
     applyData(data);
-    localStorage.setItem('cfa_gist_token',token);
-    localStorage.setItem('cfa_gist_id',gistId);
     localStorage.setItem('cfa_last_pull',new Date().toISOString());
-    showStatus('sync-gist-status','✅ 拉取成功！已同步 '+Object.keys(data.checkins||{}).length+' 天打卡 + '+(data.notes||[]).length+' 条笔记','var(--green)');
+    showStatus('sync-gist-status','✅ 拉取成功！','var(--green)');
     renderSyncInfo();
   }catch(err){showStatus('sync-gist-status','❌ 拉取失败: '+err.message,'var(--red)');}
 }
 
-function showStatus(id,msg,color){const el=document.getElementById(id);el.textContent=msg;el.style.color=color;setTimeout(()=>{if(el.textContent===msg)el.style.opacity='.6';},5000);}
+// Core pull
+async function _doPull(token,gistId){
+  const res=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Authorization':'token '+token}});
+  if(!res.ok)throw new Error(res.status);
+  const j=await res.json();
+  const file=j.files['cfa-study-data.json'];
+  if(!file)throw new Error('Gist中无数据');
+  return JSON.parse(file.content);
+}
+
+// Silent pull on page load (no confirm, only if remote is newer)
+async function silentPull(){
+  try{
+    const token=localStorage.getItem('cfa_gist_token'),gid=localStorage.getItem('cfa_gist_id');
+    if(!token||!gid)return;
+    const data=await _doPull(token,gid);
+    if(!data||!data._ts)return;
+    const localTs=localStorage.getItem('cfa_last_push')||'';
+    if(data._ts>localTs){
+      applyData(data,true);
+      localStorage.setItem('cfa_last_pull',new Date().toISOString());
+      renderAll();
+      updateAutoStatus('⬇️ 自动拉取了云端数据 ('+new Date(data._ts).toLocaleTimeString('zh-CN')+')');
+    }
+  }catch(e){}
+}
+
+// ===== AUTO SYNC =====
+function toggleAutoSync(){
+  const enabled=document.getElementById('auto-sync-toggle').checked;
+  localStorage.setItem('cfa_auto_sync',enabled?'true':'false');
+  if(enabled){
+    const token=(document.getElementById('gist-token').value||localStorage.getItem('cfa_gist_token')||'').trim();
+    const gistId=(document.getElementById('gist-id').value||localStorage.getItem('cfa_gist_id')||'').trim();
+    if(!token){
+      document.getElementById('auto-sync-toggle').checked=false;
+      localStorage.setItem('cfa_auto_sync','false');
+      showStatus('sync-gist-status','❌ 请先配置Token再开启自动同步','var(--red)');
+      return;
+    }
+    saveGistConfig();
+    startAutoSync();
+    updateAutoStatus('✅ 自动同步已开启');
+  }else{
+    stopAutoSync();
+    updateAutoStatus('⏸️ 自动同步已关闭');
+  }
+}
+
+function startAutoSync(){
+  stopAutoSync();
+  const min=parseInt(localStorage.getItem('cfa_auto_interval'))||5;
+  _autoSyncTimer=setInterval(autoSyncTick, min*60*1000);
+  // Also sync when data changes (debounced)
+  updateAutoStatus('🔄 自动同步运行中 (每'+min+'分钟)');
+}
+
+function stopAutoSync(){
+  if(_autoSyncTimer){clearInterval(_autoSyncTimer);_autoSyncTimer=null;}
+}
+
+async function autoSyncTick(){
+  const token=localStorage.getItem('cfa_gist_token');
+  const gistId=localStorage.getItem('cfa_gist_id');
+  if(!token)return;
+  const currentHash=hashData();
+  if(currentHash!==_dataHash){
+    // Local data changed, push
+    const ok=await _doPush(token);
+    if(ok)updateAutoStatus('⬆️ 自动上传 '+new Date().toLocaleTimeString('zh-CN'));
+  }else{
+    // Check if remote has updates
+    try{
+      if(!gistId)return;
+      const data=await _doPull(token,gistId);
+      if(data&&data._ts){
+        const lastPush=localStorage.getItem('cfa_last_push')||'';
+        if(data._ts>lastPush){
+          applyData(data);
+          localStorage.setItem('cfa_last_pull',new Date().toISOString());
+          updateAutoStatus('⬇️ 自动拉取 '+new Date().toLocaleTimeString('zh-CN'));
+        }else{
+          updateAutoStatus('✅ 已是最新 '+new Date().toLocaleTimeString('zh-CN'));
+        }
+      }
+    }catch(e){}
+  }
+}
+
+function saveAutoInterval(){
+  const v=document.getElementById('auto-interval').value;
+  localStorage.setItem('cfa_auto_interval',v);
+  if(localStorage.getItem('cfa_auto_sync')==='true')startAutoSync();
+  showStatus('sync-gist-status','💾 同步间隔已设为 '+v+' 分钟','var(--green)');
+}
+
+function updateAutoStatus(msg){
+  const el=document.getElementById('auto-sync-status');
+  if(el){el.textContent=msg;el.style.opacity='1';setTimeout(()=>{el.style.opacity='.7';},3000);}
+}
+
+// Hook into save functions to trigger immediate auto-push
+const _origSaveCI=saveCI,_origSaveN=saveN;
+saveCI=function(){_origSaveCI();scheduleAutoPush();};
+saveN=function(){_origSaveN();scheduleAutoPush();};
+let _pushDebounce=null;
+function scheduleAutoPush(){
+  if(localStorage.getItem('cfa_auto_sync')!=='true')return;
+  clearTimeout(_pushDebounce);
+  _pushDebounce=setTimeout(async()=>{
+    const token=localStorage.getItem('cfa_gist_token');
+    if(!token)return;
+    const ok=await _doPush(token);
+    if(ok)updateAutoStatus('⬆️ 数据已自动上传 '+new Date().toLocaleTimeString('zh-CN'));
+  },2000); // 2秒后上传，避免连续操作时频繁调用
+}
+
+function showStatus(id,msg,color){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.color=color;el.style.opacity='1';setTimeout(()=>{if(el.textContent===msg)el.style.opacity='.6';},5000);}
 
 function renderSyncInfo(){
   const el=document.getElementById('sync-info');if(!el)return;
   const lp=localStorage.getItem('cfa_last_push'),ll=localStorage.getItem('cfa_last_pull'),gid=localStorage.getItem('cfa_gist_id');
   const ck=Object.keys(cks).filter(k=>cks[k].completion>0).length;
+  const autoOn=localStorage.getItem('cfa_auto_sync')==='true';
+  const iv=localStorage.getItem('cfa_auto_interval')||'5';
   el.innerHTML=`
     📊 本地数据: <b>${ck}</b> 天打卡 · <b>${notes.length}</b> 条笔记 · <b>${mf.length}</b> 个已掌握公式<br>
     ${gid?'🔗 Gist ID: <code style="font-size:.75rem;background:var(--bg3);padding:2px 6px;border-radius:4px;">'+gid+'</code><br>':'🔗 Gist: 未配置<br>'}
     ⬆️ 上次上传: ${lp?new Date(lp).toLocaleString('zh-CN'):'从未'}<br>
-    ⬇️ 上次拉取: ${ll?new Date(ll).toLocaleString('zh-CN'):'从未'}
+    ⬇️ 上次拉取: ${ll?new Date(ll).toLocaleString('zh-CN'):'从未'}<br>
+    🔄 自动同步: ${autoOn?'<span style="color:var(--green)">已开启 ('+iv+'分钟)</span>':'<span style="color:var(--text2)">未开启</span>'}
   `;
 }
