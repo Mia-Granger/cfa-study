@@ -99,7 +99,6 @@ const RESOURCES=[
     {n:'🏛️ CFA官方模考+题库 (最权威，考前必做)',u:'https://www.cfainstitute.org/programs/cfa-program/candidate-resources/mock-exam-and-practice-questions'},
     {n:'⭐ FreeFellow 1050题 (CFA官方认证Prep Provider·午间首选)',u:'https://www.freefellow.org/free/cfa-level-1/'},
     {n:'FinQuiz 6套模考 (行业认可·周末模考用)',u:'https://www.finquiz.com/cfa/level-1/mock-exam/'},
-    {n:'300Hours 免费资料汇总 (CFA社区知名博客)',u:'https://300hours.com/the-free-cfa-study-materials-list/'},
     {n:'Soleadea 免费题库+视频 (质量不错)',u:'https://soleadea.org/free-cfa-study-materials'},
     {n:'Kaplan Schweser 免费资料 (培训行业标杆)',u:'https://www.schweser.com/cfa/free-study-materials'},
   ]},
@@ -112,7 +111,6 @@ const RESOURCES=[
     {n:'超星MOOC CFA一级全景课 (免费·198课时·中文)',u:'https://mooc1.chaoxing.com/mooc-ans/course/204303326.html'},
   ]},
   {c:'🌐 社区 & 经验分享',items:[
-    {n:'300Hours.com (英文CFA备考博客·经验/资料汇总)',u:'https://300hours.com/'},
     {n:'CFA论坛 (中文·cfa.cn旗下)',u:'https://bbs.cfa.cn/'},
     {n:'知乎: CFA一级备考攻略',u:'https://www.zhihu.com/topic/19609729'},
     {n:'小红书搜索: CFA一级备考',u:'https://www.xiaohongshu.com/search_result?keyword=CFA%E4%B8%80%E7%BA%A7'},
