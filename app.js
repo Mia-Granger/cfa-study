@@ -1,3 +1,13 @@
+// ===== IndexedDB — 多媒体附件存储 =====
+const IDB_NAME='cfa_media',IDB_VER=1;
+let _idb=null;
+function openIDB(){return new Promise((ok,no)=>{if(_idb)return ok(_idb);const r=indexedDB.open(IDB_NAME,IDB_VER);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});};r.onsuccess=e=>{_idb=e.target.result;ok(_idb);};r.onerror=e=>no(e);});}
+function idbPut(file){return openIDB().then(db=>new Promise((ok,no)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put(file);tx.oncomplete=()=>ok();tx.onerror=e=>no(e);}));}
+function idbGet(id){return openIDB().then(db=>new Promise((ok,no)=>{const tx=db.transaction('files','readonly');const r=tx.objectStore('files').get(id);r.onsuccess=()=>ok(r.result);r.onerror=e=>no(e);}));}
+function idbDel(id){return openIDB().then(db=>new Promise((ok,no)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=()=>ok();tx.onerror=e=>no(e);}));}
+// Temp attachments for current note edit
+let _pendingFiles=[];
+
 // ===== DATA =====
 const EXAM_DATE=new Date(2026,4,16,8,0),START_DATE=new Date(2026,3,7);
 const SUBJECTS=[
@@ -245,10 +255,18 @@ function renderDash(){
   for(let i=6;i>=0;i--){const d=tn-i,c=cks[d],h=c?c.hours:0;if(h>mx)mx=h;const p=PLAN.find(x=>x.day===d);ds.push({d,h,l:p?p.date:'D'+d});}
   ds.forEach(({h,l})=>{const p=Math.max(4,h/mx*100);wh+=`<div class="mini-bar" style="height:${p}%;${h?'':'background:var(--bg3);'}"><div class="tip">${l}: ${h}h</div></div>`;});
   document.getElementById('wc').innerHTML=wh;
-  // Subject table
-  const sh={};PLAN.forEach(p=>{const c=cks[p.day];if(c&&c.hours>0&&p.subject!=='review'&&p.subject!=='mock')sh[p.subject]=(sh[p.subject]||0)+c.hours;});
+  // Subject table — progress = sum of checkin completion / (total planned days × 100)
+  const sh={},sDays={},sComp={};
+  PLAN.forEach(p=>{
+    if(p.subject==='review'||p.subject==='mock')return;
+    sDays[p.subject]=(sDays[p.subject]||0)+1; // total planned days per subject
+    const c=cks[p.day];
+    if(c&&c.hours>0) sh[p.subject]=(sh[p.subject]||0)+c.hours; // hours for display
+    if(c&&c.completion>0) sComp[p.subject]=(sComp[p.subject]||0)+c.completion; // completion sum
+  });
   document.getElementById('stb').innerHTML=SUBJECTS.map(s=>{
-    const lg=sh[s.id]||0,pc=Math.min(100,Math.round(lg/s.hours*100));
+    const lg=sh[s.id]||0, totalDays=sDays[s.id]||1, compSum=sComp[s.id]||0;
+    const pc=Math.min(100,Math.round(compSum/(totalDays*100)*100));
     let st='not-started',sl='未开始';if(pc>=100){st='completed';sl='已完成';}else if(pc>0){st='in-progress';sl='进行中';}
     return `<tr><td><span class="sdot" style="background:${s.color}"></span>${s.name}</td><td>${s.weight}</td><td>${s.hours}h</td><td>${lg.toFixed(1)}h</td><td><div class="progress-track" style="width:80px;height:6px;display:inline-block;vertical-align:middle"><div class="progress-fill green" style="width:${pc}%"></div></div> <span style="font-size:.7rem;color:var(--accent2)">${pc}%</span></td><td><span class="status-badge ${st}">${sl}</span></td></tr>`;
   }).join('');
@@ -326,28 +344,125 @@ function renderNotes(){
   let fn=nFilter==='all'?notes:notes.filter(n=>n.subject===nFilter);
   if(!fn.length){ls.innerHTML='<div class="empty-state"><div class="eicon">📝</div><p>还没有笔记，点击"新建笔记"开始记录</p></div>';return;}
   const te={note:'📖',insight:'💡',mistake:'❌',formula:'📐'};
-  ls.innerHTML=fn.map(n=>`<div class="note-card" onclick="viewN('${n.id}')"><div class="note-meta"><span class="note-tag tag-${n.subject}">${SL[n.subject]||n.subject}</span><span class="note-tag" style="background:var(--bg3);color:var(--text2)">${te[n.type]||'📖'} ${n.type}</span><span class="note-date-label">${new Date(n.created).toLocaleDateString('zh-CN')}</span></div><div class="note-title">${n.title}</div><div class="note-preview">${n.content}</div><div class="note-actions"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openNM('${n.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delN('${n.id}')">🗑️</button></div></div>`).join('');
+  ls.innerHTML=fn.map(n=>{
+    const ac=(n.attachments||[]).length;
+    return `<div class="note-card" onclick="viewN('${n.id}')"><div class="note-meta"><span class="note-tag tag-${n.subject}">${SL[n.subject]||n.subject}</span><span class="note-tag" style="background:var(--bg3);color:var(--text2)">${te[n.type]||'📖'} ${n.type}</span>${ac?`<span class="note-tag" style="background:var(--blue-bg);color:var(--blue)">📎 ${ac}</span>`:''}<span class="note-date-label">${new Date(n.created).toLocaleDateString('zh-CN')}</span></div><div class="note-title">${n.title}</div><div class="note-preview">${n.content}</div><div class="note-actions"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openNM('${n.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delN('${n.id}')">🗑️</button></div></div>`;
+  }).join('');
 }
 function openNM(eid,sub,type,pre){
   document.getElementById('nei').value=eid||'';
   document.getElementById('nmt').textContent=eid?'✏️ 编辑笔记':'📝 新建笔记';
-  if(eid){const n=notes.find(x=>x.id===eid);if(n){document.getElementById('n-title').value=n.title;document.getElementById('n-sub').value=n.subject;document.getElementById('n-type').value=n.type;document.getElementById('n-content').value=n.content;}}
-  else{document.getElementById('n-title').value=pre||'';document.getElementById('n-sub').value=sub||'general';document.getElementById('n-type').value=type||'note';document.getElementById('n-content').value='';}
+  _pendingFiles=[];
+  if(eid){
+    const n=notes.find(x=>x.id===eid);
+    if(n){document.getElementById('n-title').value=n.title;document.getElementById('n-sub').value=n.subject;document.getElementById('n-type').value=n.type;document.getElementById('n-content').value=n.content;_pendingFiles=(n.attachments||[]).slice();}
+  }else{
+    document.getElementById('n-title').value=pre||'';document.getElementById('n-sub').value=sub||'general';document.getElementById('n-type').value=type||'note';document.getElementById('n-content').value='';
+  }
+  renderAttachPreview();
   openM('n-modal');
 }
+function renderAttachPreview(){
+  const el=document.getElementById('attach-preview');if(!el)return;
+  if(!_pendingFiles.length){el.innerHTML='<div style="font-size:.75rem;color:var(--text2)">暂无附件</div>';return;}
+  el.innerHTML=_pendingFiles.map((f,i)=>{
+    const icon=f.type.startsWith('image')?'🖼️':f.type.startsWith('audio')?'🎵':f.type.startsWith('video')?'🎬':'📄';
+    const sz=f.size?(f.size/1024).toFixed(1)+'KB':'';
+    return `<div class="attach-item"><span>${icon} ${f.name} <span style="color:var(--text2);font-size:.68rem">${sz}</span></span><button class="btn btn-sm btn-danger" onclick="removeAttach(${i})" style="padding:2px 6px;font-size:.65rem">×</button></div>`;
+  }).join('');
+}
+function removeAttach(i){_pendingFiles.splice(i,1);renderAttachPreview();}
+
+// File upload handler
+function handleFileUpload(e){
+  const files=e.target.files;if(!files.length)return;
+  Array.from(files).forEach(file=>{
+    if(file.size>10*1024*1024){alert(file.name+' 超过10MB，跳过');return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const id='att_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+      const data=ev.target.result; // base64 data URL
+      // Store in IndexedDB
+      idbPut({id,data,name:file.name,type:file.type,size:file.size}).then(()=>{
+        _pendingFiles.push({id,name:file.name,type:file.type,size:file.size});
+        renderAttachPreview();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+
+// Audio recording
+let _mediaRec=null,_audioChunks=[];
+function toggleRecord(){
+  const btn=document.getElementById('rec-btn');
+  if(_mediaRec&&_mediaRec.state==='recording'){
+    _mediaRec.stop();btn.textContent='🎙️ 录音';btn.classList.remove('recording');return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    _audioChunks=[];
+    _mediaRec=new MediaRecorder(stream);
+    _mediaRec.ondataavailable=e=>{if(e.data.size>0)_audioChunks.push(e.data);};
+    _mediaRec.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(_audioChunks,{type:'audio/webm'});
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const id='att_'+Date.now()+'_rec';
+        const name='录音_'+new Date().toLocaleTimeString('zh-CN').replace(/:/g,'')+'.webm';
+        idbPut({id,data:ev.target.result,name,type:'audio/webm',size:blob.size}).then(()=>{
+          _pendingFiles.push({id,name,type:'audio/webm',size:blob.size});
+          renderAttachPreview();
+        });
+      };
+      reader.readAsDataURL(blob);
+    };
+    _mediaRec.start();btn.textContent='⏹️ 停止';btn.classList.add('recording');
+  }).catch(()=>alert('无法访问麦克风'));
+}
+
 function saveN(){
   const eid=document.getElementById('nei').value,title=document.getElementById('n-title').value.trim()||'无标题',sub=document.getElementById('n-sub').value,type=document.getElementById('n-type').value,content=document.getElementById('n-content').value.trim();
-  if(!content){alert('请输入内容');return;}
-  if(eid){const i=notes.findIndex(n=>n.id===eid);if(i>=0)notes[i]={...notes[i],title,subject:sub,type,content,updated:new Date().toISOString()};}
-  else notes.unshift({id:Date.now()+'',title,subject:sub,type,content,created:new Date().toISOString(),updated:new Date().toISOString()});
+  if(!content&&!_pendingFiles.length){alert('请输入内容或添加附件');return;}
+  const attachments=_pendingFiles.map(f=>({id:f.id,name:f.name,type:f.type,size:f.size}));
+  if(eid){const i=notes.findIndex(n=>n.id===eid);if(i>=0)notes[i]={...notes[i],title,subject:sub,type,content,attachments,updated:new Date().toISOString()};}
+  else notes.unshift({id:Date.now()+'',title,subject:sub,type,content,attachments,created:new Date().toISOString(),updated:new Date().toISOString()});
+  _pendingFiles=[];
   sv('notes',notes);closeM('n-modal');renderNotes();
 }
-function delN(id){if(!confirm('确定删除？'))return;notes=notes.filter(n=>n.id!==id);sv('notes',notes);renderNotes();}
+function delN(id){
+  if(!confirm('确定删除？'))return;
+  const n=notes.find(x=>x.id===id);
+  if(n&&n.attachments)n.attachments.forEach(a=>idbDel(a.id));
+  notes=notes.filter(n=>n.id!==id);sv('notes',notes);renderNotes();
+}
 function viewN(id){
   const n=notes.find(x=>x.id===id);if(!n)return;
   document.getElementById('vnt').textContent=n.title;
   document.getElementById('vnm').innerHTML=`<span class="note-tag tag-${n.subject}">${SL[n.subject]}</span> <span class="note-date-label">${new Date(n.created).toLocaleString('zh-CN')}</span>`;
-  document.getElementById('vnb').textContent=n.content;openM('vn-modal');
+  document.getElementById('vnb').textContent=n.content;
+  // Render attachments
+  const ael=document.getElementById('vn-attachments');
+  if(ael&&n.attachments&&n.attachments.length){
+    ael.innerHTML='<div style="font-size:.78rem;font-weight:600;margin-bottom:6px;color:var(--text2)">📎 附件 ('+n.attachments.length+')</div><div id="vn-att-list" class="attach-grid"></div>';
+    const list=document.getElementById('vn-att-list');
+    n.attachments.forEach(a=>{
+      idbGet(a.id).then(file=>{
+        if(!file)return;
+        const div=document.createElement('div');div.className='attach-view-item';
+        if(a.type.startsWith('image')){
+          div.innerHTML=`<img src="${file.data}" alt="${a.name}" class="attach-img" onclick="window.open(this.src)"><div class="attach-name">${a.name}</div>`;
+        }else if(a.type.startsWith('audio')){
+          div.innerHTML=`<audio controls src="${file.data}" style="width:100%;max-width:280px;"></audio><div class="attach-name">${a.name}</div>`;
+        }else{
+          div.innerHTML=`<a href="${file.data}" download="${a.name}" class="btn btn-sm btn-secondary">📥 ${a.name}</a>`;
+        }
+        list.appendChild(div);
+      });
+    });
+  }else if(ael){ael.innerHTML='';}
+  openM('vn-modal');
 }
 
 // Formulas
